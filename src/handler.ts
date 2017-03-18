@@ -4,7 +4,7 @@ let redis = require('redis');
 
 export class ExtfaceHandler {
   deviceId: string;
-  jobId: string;
+  sessionId: string;
   driver: ExtfaceDriver;
 
   constructor(deviceId :string, driver :ExtfaceDriver) {
@@ -14,7 +14,7 @@ export class ExtfaceHandler {
 
   push(buffer :any, callback :(err: Error, totalBytesProcessed: number)=> void) {
     let totalBytesProcessed = 0;
-    let r = redis.createClient();
+    let r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
     let self = this;
 
     function errorCallback(err :any) {
@@ -50,7 +50,17 @@ export class ExtfaceHandler {
     }); //once ready
   }
 
-  pull() {
-
+  pull(sessionId: string, callback: (err, data?) => void) {
+    let r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
+    r.publish(sessionId, 0); //~ connected
+    r.blpop(sessionId, 1, (err, value)=> {
+      let data = '';
+      callback(err);
+      if (value) {
+        console.log(value);
+        data = value[1];
+      }
+      callback(data);
+    });
   }
 }
