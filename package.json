@@ -12,7 +12,7 @@
     "build": "tsc -d"
   },
   "author": "Alex Vangelov <email@data.bg>",
-  "license": "AL2",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@types/chai": "^3.4.35",
     "@types/chai-spies": "^0.0.0",
