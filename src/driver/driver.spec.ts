@@ -110,6 +110,7 @@ describe('Driver', () => {
     session.do((ds: IExtfaceDriver) => {
       ds.push('567');
       ds.push('status?');
+      sim.cycle(session.uuid);
       if (ds.pull(1) === 'OK') {
         console.log('Extface Rocks!');
         ds.push('*1');
@@ -118,7 +119,6 @@ describe('Driver', () => {
         console.log('Extface Sucks!');
         ds.push('*2');
       }
-      sim.cycle(session.uuid);
       session.done();
     });
     sim.cycle(session.uuid);
