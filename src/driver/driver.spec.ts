@@ -91,6 +91,20 @@ describe('Driver', () => {
       .do((ds: TestDriver1) => { });
   });
 
+  it('session device invite', (done) => {
+    let onInvite = spy();
+    let session = TestDriver1.session(deviceId, 'Test session')
+      .once('ready', () => {
+        sim.cycle(session.uuid); //for connect
+      })
+      .once('invite', onInvite)
+      .once('done', done)
+      .do((ds: TestDriver1) => {
+        expect(onInvite).to.have.been.called();
+        session.done();
+      });
+  });
+
   it('session connected', (done) => {
     let onConnected = spy();
     let session = TestDriver1.session(deviceId, 'Test session')
@@ -101,7 +115,7 @@ describe('Driver', () => {
       .once('done', done)
       .do((ds: TestDriver1) => {
         expect(onConnected).to.have.been.called();
-        done();
+        session.done();
       });
   });
 

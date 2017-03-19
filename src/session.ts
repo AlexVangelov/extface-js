@@ -40,6 +40,7 @@ export class ExtfaceSession extends EventEmitter {
   do(callback: (ds: any) => void): ExtfaceSession {
     let ds = new ExtfaceDriverContext(this.driverInstance);
     this.r.once('subscribe', (channel, subscriptions) => {
+      this.emit('invite');
       setTimeout(() => {
         if (!this.isConnected) {
           this.r.unsubscribe();
