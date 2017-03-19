@@ -16,4 +16,6 @@ export class ExtfaceDriverContext {
       });
     } while ((driver = Object.getPrototypeOf(driver)) && driver != Object.prototype);
   }
+
+  static defaultTimeoutMs = 2000;
 }

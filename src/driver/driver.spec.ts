@@ -9,6 +9,7 @@ import { ExtfaceDriver } from './';
 import { ExtfaceHandler } from '../handler';
 import { IExtfaceDriver } from './interface';
 import { DeviceSimulator } from '../utils/deviceSimulator';
+import { ExtfaceDriverContext } from './context';
 
 const DEVICE_ID = 'abc';
 
@@ -25,6 +26,7 @@ describe('Driver', () => {
   let sim = new DeviceSimulator(deviceId, TestDriver1, {});
 
   beforeEach((done) => {
+    ExtfaceDriverContext.defaultTimeoutMs = 100;
     done();
   });
 
@@ -61,28 +63,32 @@ describe('Driver', () => {
     session.do((ds: TestDriver1) => {
       session.done();
     });
-    sim.cycle(session.uuid);
+    session.once('ready', () => {
+      sim.cycle(session.uuid);
+    });
   });
 
   it('session timeout', (done) => {
     let session = TestDriver1.session(deviceId, 'Test session')
-      .once('error', (err)=> {
+      .once('error', (err) => {
         expect(err.message).to.equal('Timeout waiting for device to connect');
         done();
       })
-      .do((ds: TestDriver1) => {});
+      .do((ds: TestDriver1) => { });
   });
 
   it('session connected', (done) => {
     let onConnected = spy();
     let session = TestDriver1.session(deviceId, 'Test session')
+      .once('ready', () => {
+        sim.cycle(session.uuid); //for connect
+      })
       .once('connected', onConnected)
       .once('done', done)
       .do((ds: TestDriver1) => {
         expect(onConnected).to.have.been.called();
         done();
       });
-    sim.cycle(session.uuid);
   });
 
   it('session fiber', (done) => {
@@ -90,6 +96,9 @@ describe('Driver', () => {
       onConnected: spy()
     }
     let session = TestDriver1.session(deviceId, 'Test session')
+      .once('ready', () => {
+        sim.cycle(session.uuid); //for connect
+      })
       .once('connected', cbs.onConnected)
       .once('error', (err) => {
         throw err; // expose in test environment
@@ -101,7 +110,6 @@ describe('Driver', () => {
         expect(l).to.equal(3);
         session.done();
       });
-    sim.cycle(session.uuid); //for connect
   });
 
   it('session body', (done) => {
@@ -121,6 +129,8 @@ describe('Driver', () => {
       }
       session.done();
     });
-    sim.cycle(session.uuid);
+    session.once('ready', () => {
+      sim.cycle(session.uuid);
+    });
   });
 });

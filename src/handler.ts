@@ -22,7 +22,7 @@ export class ExtfaceHandler {
       callback(err, totalBytesProcessed);
     }
 
-    r.once('ready', ()=> {
+    //r.once('ready', ()=> {
       r.append(this.deviceId, buffer, (err, bytesAppended)=> {
         if (err) return errorCallback(err);
         r.get(this.deviceId, (err, fullBuffer)=> {
@@ -41,13 +41,14 @@ export class ExtfaceHandler {
                 }
               });
             } else {
+              r.quit();
               callback(null, totalBytesProcessed);
             }
           }
           procBuffer(buffer);
         }); //get fullBuffer
       }); //append
-    }); //once ready
+    //}); //once ready
   }
 
   pull(sessionId: string, callback: (err, data?) => void) {
@@ -62,6 +63,7 @@ export class ExtfaceHandler {
           r.publish(sessionId, data.length);
         }
         if (err || !data) {
+          r.quit();
           callback(err, allData);
         } else {
           allData += data;

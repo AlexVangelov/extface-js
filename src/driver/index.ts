@@ -41,17 +41,19 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
     this.r.on('message', (channel, out) => {
       if (out !== '-1') {
         clearTimeout(tmo);
-        this.r.unsubscribe();
         this.session.bytesOut += parseInt(out);
-        callback && callback(null, buffer.length);
+        this.r.unsubscribe((err, res)=> {
+          callback && callback(err, buffer.length);
+        });
       }
     });
     this.r.on('subscribe', () => {
       this.session.rpush(buffer, (err, data)=>{
         if (err) {
           clearTimeout(tmo);
-          this.r.unsubscribe();
-          callback(err, 0);
+          this.r.unsubscribe((err, res)=>{
+            callback(err, 0);
+          });
         }
       });
     });
@@ -78,6 +80,10 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
 
   checkStatus(callback: (err: Error, data: boolean) => void) {
     callback(null, false);
+  }
+
+  quit() {
+    this.r.quit();
   }
 
   private get _bufferKey() {

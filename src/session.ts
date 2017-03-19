@@ -16,14 +16,15 @@ export class ExtfaceSession extends EventEmitter {
     super();
     this.uuid = uuid();
     this.driverInstance = new Driver(deviceId, this);
+    this.r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
+    this.r.once('ready', ()=> {
+      this.driverInstance.flush();
+      this.emit('ready');
+    });
   }
 
   do(callback: (ds: any) => void): ExtfaceSession {
     let ds = new ExtfaceDriverContext(this.driverInstance);
-    this.r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
-    this.r.once('ready', ()=> {
-      this.driverInstance.flush();
-    });
     this.r.on('subscribe', (channel, subscriptions)=>{
       setTimeout(()=>{
         if (!this.isConnected) {
@@ -31,22 +32,23 @@ export class ExtfaceSession extends EventEmitter {
           this.r.quit();
           this.emit('error', new Error('Timeout waiting for device to connect'));
         }
-      }, 1500); //move me to global setting timeout
+      }, ExtfaceDriverContext.defaultTimeoutMs);
     });
-    this.r.on('message', (channel, out)=>{
-      this.r.unsubscribe();
-      if (!this.isConnected) {
-        this.isConnected = true;
-        this.emit('connected');
-        Sync(() => {
-          callback(ds);
-        }, (err, result) => {
-          if (err) {
-            this.emit('error', err);
-            this.done();
-          }
-        });
-      }
+    this.r.once('message', (channel, out)=>{
+      this.r.unsubscribe((err, res)=>{
+        if (!this.isConnected) {
+          this.isConnected = true;
+          this.emit('connected');
+          Sync(() => {
+            callback(ds);
+          }, (err, result) => {
+            if (err) {
+              this.emit('error', err);
+              this.done();
+            }
+          });
+        }
+      });
     });
     this.r.subscribe(ds.sessionId);
     return this;
@@ -58,6 +60,7 @@ export class ExtfaceSession extends EventEmitter {
 
   done() {
     if (this.r) this.r.quit();
+    this.driverInstance.quit();
     this.emit('done');
   }
 
