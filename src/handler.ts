@@ -1,15 +1,15 @@
 // For API Gateway (GET -> pull, POST -> push)
-import { ExtfaceDriver } from './driver';
+import { IExtfaceDriverClass, ExtfaceDriver } from './driver';
 let redis = require('redis');
 
 export class ExtfaceHandler {
   deviceId: string;
   sessionId: string;
-  driver: ExtfaceDriver;
+  driverClass: IExtfaceDriverClass<ExtfaceDriver>;
 
-  constructor(deviceId :string, driver :ExtfaceDriver) {
+  constructor(deviceId :string, driverClass :IExtfaceDriverClass<ExtfaceDriver>) {
     this.deviceId = deviceId;
-    this.driver = driver;
+    this.driverClass = driverClass;
   }
 
   push(buffer :any, callback :(err: Error, totalBytesProcessed: number)=> void) {
@@ -29,7 +29,7 @@ export class ExtfaceHandler {
           if (err) return errorCallback(err);
           function procBuffer(b :any) {
             if (b.length) {
-              self.driver.handle(buffer, (err, bytesProcessed)=>{
+              self.driverClass.handle(this.sessionId, buffer, (err, bytesProcessed)=>{
                 if (err) return errorCallback(err);
                 if (bytesProcessed) {
                   totalBytesProcessed += bytesProcessed;
@@ -52,15 +52,23 @@ export class ExtfaceHandler {
 
   pull(sessionId: string, callback: (err, data?) => void) {
     let r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
-    r.publish(sessionId, 0); //~ connected
-    r.blpop(sessionId, 1, (err, value)=> {
-      let data = '';
-      callback(err);
-      if (value) {
-        console.log(value);
-        data = value[1];
-      }
-      callback(data);
-    });
+    r.publish(sessionId, -1); //~ connected
+    let allData = '';
+    function recursiveData() {
+      r.blpop(sessionId, 1, (err, value)=> {
+        let data = '';
+        if (value) {
+          data = value[1];
+          r.publish(sessionId, data.length);
+        }
+        if (err || !data) {
+          callback(err, allData);
+        } else {
+          allData += data;
+          recursiveData();
+        }
+      });
+    }
+    recursiveData();
   }
 }

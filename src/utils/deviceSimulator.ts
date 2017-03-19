@@ -1,5 +1,5 @@
 import { ExtfaceHandler } from '../handler';
-import { ExtfaceDriver } from '../driver';
+import { ExtfaceDriver, IExtfaceDriverClass } from '../driver';
 require('sync');
 
 export class DeviceSimulator {
@@ -8,14 +8,16 @@ export class DeviceSimulator {
   unpack: Function;
   handler: ExtfaceHandler;
 
-  constructor(deviceId: string, driver: ExtfaceDriver, cbs: any, pack?: Function, unpack?: Function) {
-    this.handler = new ExtfaceHandler(deviceId, driver);
+  constructor(deviceId: string, driverClass: IExtfaceDriverClass<ExtfaceDriver>, cbs: any, pack?: Function, unpack?: Function) {
+    this.handler = new ExtfaceHandler(deviceId, driverClass);
     this.cbs = cbs;
     this.pack = pack;
     this.unpack = unpack;
   }
 
-  cycle(sessionId) {
-    return (<any>this.handler.pull).sync(null, sessionId);
+  cycle(sessionId, callback?: (err: Error, data: any)=>void) {
+    return this.handler.pull(sessionId, (err, data)=>{
+      callback && callback(err, data);
+    });
   }
 }

@@ -5,7 +5,7 @@ export class ExtfaceDriverContext {
 
   constructor(driver: ExtfaceDriver) {
     let origDriver = driver;
-    this.sessionId = driver.sessionId;
+    this.sessionId = driver.session.uuid;
     do {
       Object.getOwnPropertyNames(driver).forEach((p) => {
         if (p !== 'constructor' && typeof this[p] === 'undefined' && typeof driver[p] === 'function') {
