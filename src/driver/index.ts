@@ -38,16 +38,20 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
       this.r.unsubscribe();
       callback && callback(new Error('Timeout waiting on queue'), 0);
     }, 1000);
-    this.r.on('message', (channel, out) => {
+
+    let onMessageListener = (channel, out)=> {
       if (out !== '-1') {
         clearTimeout(tmo);
+        this.r.removeListener('message', onMessageListener);
         this.session.bytesOut += parseInt(out);
         this.r.unsubscribe((err, res)=> {
           callback && callback(err, buffer.length);
         });
       }
-    });
-    this.r.on('subscribe', () => {
+    }
+    this.r.on('message', onMessageListener);
+    
+    this.r.once('subscribe', (channel, subscriptions) => {
       this.session.rpush(buffer, (err, data)=>{
         if (err) {
           clearTimeout(tmo);

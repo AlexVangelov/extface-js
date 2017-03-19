@@ -59,7 +59,7 @@ describe('Driver', () => {
 
   it('session', (done) => {
     let session = TestDriver1.session(deviceId, 'Test session');
-    session.on('done', done);
+    session.once('done', done);
     session.do((ds: TestDriver1) => {
       session.done();
     });
@@ -114,7 +114,7 @@ describe('Driver', () => {
 
   it('session body', (done) => {
     let session = TestDriver1.session('abc', 'Test session');
-    session.on('done', done);
+    session.once('done', done);
     session.do((ds: IExtfaceDriver) => {
       ds.push('567');
       ds.push('status?');
