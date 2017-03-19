@@ -85,7 +85,7 @@ describe('Driver', () => {
   it('session timeout', (done) => {
     let session = TestDriver1.session(deviceId, 'Test session')
       .once('error', (err) => {
-        expect(err.message).to.equal('Timeout waiting for device to connect');
+        expect(err.message).to.equal('Timeout waiting for device to connect (after 0.1s)');
         done();
       })
       .do((ds: TestDriver1) => { });
@@ -141,7 +141,7 @@ describe('Driver', () => {
   });
 
   it('session body', (done) => {
-    let session = TestDriver1.session('abc', 'Test session');
+    let session = TestDriver1.session(deviceId, 'Test session');
     session.once('done', done);
     session.do((ds: IExtfaceDriver) => {
       ds.push('567');

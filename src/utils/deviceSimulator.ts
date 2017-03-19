@@ -21,16 +21,18 @@ export class DeviceSimulator {
   pack: Function;
   unpack: Function;
   handler: ExtfaceHandler;
+  deviceId: string;
 
   constructor(deviceId: string, driverClass: IExtfaceDriverClass<ExtfaceDriver>, cbs: any, pack?: Function, unpack?: Function) {
     this.handler = new ExtfaceHandler(deviceId, driverClass);
     this.cbs = cbs;
     this.pack = pack;
     this.unpack = unpack;
+    this.deviceId = deviceId;
   }
 
   cycle(sessionId, callback?: (err: Error, data: any)=>void) {
-    return this.handler.pull(sessionId, (err, data)=>{
+    return this.handler.pull(this.deviceId, sessionId, (err, data)=>{
       callback && callback(err, data);
     });
   }

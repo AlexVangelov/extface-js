@@ -53,23 +53,23 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
       callback && callback(new Error('Timeout waiting on queue'), 0);
     }, 1000);
 
-    let onMessageListener = (channel, out)=> {
+    let onMessageListener = (channel, out) => {
       if (out !== '-1') {
         clearTimeout(tmo);
         this.r.removeListener('message', onMessageListener);
         this.session.bytesOut += parseInt(out);
-        this.r.unsubscribe((err, res)=> {
+        this.r.unsubscribe((err, res) => {
           callback && callback(err, buffer.length);
         });
       }
     }
     this.r.on('message', onMessageListener);
-    
+
     this.r.once('subscribe', (channel, subscriptions) => {
-      this.session.rpush(buffer, (err, data)=>{
+      this.session.rpush(buffer, (err, data) => {
         if (err) {
           clearTimeout(tmo);
-          this.r.unsubscribe((err, res)=>{
+          this.r.unsubscribe((err, res) => {
             callback(err, 0);
           });
         }
@@ -101,7 +101,12 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
   }
 
   quit() {
+    this.r.srem(this.deviceId, this.session.uuid);
     this.r.quit();
+  }
+
+  registerSession(callback: (err, sessionsCount) => void) {
+    this.r.sadd(this.deviceId, this.session.uuid, callback);
   }
 
   private get _bufferKey() {
