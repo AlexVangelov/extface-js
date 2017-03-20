@@ -67,7 +67,7 @@ export class ExtfaceSession extends EventEmitter {
         }
       });
     });
-    this.r.subscribe(ds.sessionId);
+    this.r.subscribe(this.uuid);
     return this;
   }
 

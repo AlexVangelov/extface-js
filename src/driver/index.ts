@@ -49,16 +49,16 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
 
   push(buffer: any, callback?: (err: Error, bytesProcessed: number) => void) {
     let tmo = setTimeout(() => {
-      this.r.unsubscribe();
+      this.r.unsubscribe(this.session.uuid);
       callback && callback(new Error('Timeout waiting on queue'), 0);
     }, 1000);
 
     let onMessageListener = (channel, out) => {
-      if (out !== '-1') {
+      if (channel === this.session.uuid && out !== '-1') {
         clearTimeout(tmo);
         this.r.removeListener('message', onMessageListener);
         this.session.bytesOut += parseInt(out);
-        this.r.unsubscribe((err, res) => {
+        this.r.unsubscribe(this.session.uuid, (err, res) => {
           callback && callback(err, buffer.length);
         });
       }
@@ -66,14 +66,16 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
     this.r.on('message', onMessageListener);
 
     this.r.once('subscribe', (channel, subscriptions) => {
-      this.session.rpush(buffer, (err, data) => {
-        if (err) {
-          clearTimeout(tmo);
-          this.r.unsubscribe((err, res) => {
-            callback(err, 0);
-          });
-        }
-      });
+      if (channel === this.session.uuid) {
+        this.session.rpush(buffer, (err, data) => {
+          if (err) {
+            clearTimeout(tmo);
+            this.r.unsubscribe(this.session.uuid, (err, res) => {
+              callback(err, 0);
+            });
+          }
+        });
+      }
     });
     this.r.subscribe(this.session.uuid);
   }
