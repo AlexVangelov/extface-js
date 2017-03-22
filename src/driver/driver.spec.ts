@@ -72,10 +72,15 @@ describe('Driver', () => {
   // });
 
   it('session', (done) => {
+    let onNotify = spy();
     let session = TestDriver1.session(deviceId, 'Test session');
-    session.once('done', done);
+    session.once('done', ()=>{
+      expect(onNotify).to.have.been.called();
+      done()
+    });
+    session.on('notify', onNotify);
     session.do((ds: TestDriver1) => {
-      session.done();
+      session.notify("Session started");
     });
     session.once('ready', () => {
       sim.cycle(session.uuid);
@@ -101,7 +106,6 @@ describe('Driver', () => {
       .once('done', done)
       .do((ds: TestDriver1) => {
         expect(onInvite).to.have.been.called();
-        session.done();
       });
   });
 
@@ -115,7 +119,6 @@ describe('Driver', () => {
       .once('done', done)
       .do((ds: TestDriver1) => {
         expect(onConnected).to.have.been.called();
-        session.done();
       });
   });
 
@@ -136,7 +139,6 @@ describe('Driver', () => {
         expect(cbs.onConnected).to.have.been.called();
         let l = ds.push('123');
         expect(l).to.equal(3);
-        session.done();
       });
   });
 
@@ -155,10 +157,25 @@ describe('Driver', () => {
         console.log('Extface Sucks!');
         ds.push('*2');
       }
-      session.done();
     });
     session.once('ready', () => {
       sim.cycle(session.uuid);
     });
+  });
+
+  it('long session', (done) => {
+    let session = TestDriver1.session(deviceId, 'Long session')
+      .once('ready', () => {
+        sim.cycle(session.uuid); //for connect
+      })
+      .once('error', (err) => {
+        throw err; // expose in test environment
+      })
+      .once('done', done)
+      .do((ds: TestDriver1) => {
+        for (let i = 0; i < 100; i++) {
+          ds.push('123');
+        }
+      });
   });
 });

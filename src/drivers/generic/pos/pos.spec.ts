@@ -11,19 +11,25 @@
 //    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
+import { GenericPos } from './';
+import { DeviceSimulator } from '../../../utils/deviceSimulator';
 
-import { ExtfaceDriver } from './';
-import { ExtfaceSession } from '../session';
+describe('GenericPos', () => {
+  let sim = new DeviceSimulator('posprintdevice', GenericPos, {});
 
-export abstract class ExtfacePrintDriver extends ExtfaceDriver {
-  static NAME = 'Extface Print Driver';
-  static PRINT = true;
+  it.only('session', (done) => {
+    let session = GenericPos.session('posprintdevice', 'Session Test')
+      .do((ds) => { });
+    session.once('done', done);
+    session.once('ready', () => {
+      sim.cycle(session.uuid);
+    });
+  });
 
-  constructor(deviceId: string, session: ExtfaceSession) {
-    super(deviceId, session);
-  }
-
-  print(text: string, callback?: (err: Error, bytesOut: number)=> void): void|number {
-    this.push(text, callback);
-  }
-}
+  it.only('test page', (done) => {
+    let session = GenericPos.printTestPage('posprintdevice', done);
+    session.once('ready', () => {
+      sim.cycle(session.uuid);
+    });
+  });
+});

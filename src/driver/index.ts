@@ -17,8 +17,10 @@ import { IExtfaceDriver } from './interface';
 let redis = require('redis');
 
 export interface IExtfaceDriverClass<T extends ExtfaceDriver> {
+  session(deviceId: string, name: string): ExtfaceSession;
   handle(sessionId: string, buffer: any, callback: (err: Error, bytesProcessed: number) => void);
-  new (...a: any[]): T
+  new (...a: any[]): T;
+  NAME: string;
 }
 
 export abstract class ExtfaceDriver implements IExtfaceDriver {
@@ -36,7 +38,7 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
   session: ExtfaceSession;
   private r: any;
 
-  constructor(deviceId: string, session) {
+  constructor(deviceId: string, session: ExtfaceSession) {
     this.deviceId = deviceId;
     this.session = session;
     this.r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
@@ -91,10 +93,6 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
   }
 
   rpush(buffer: any, callback: (err: Error, data: any) => void) {
-
-  }
-
-  notify(message: string) {
 
   }
 

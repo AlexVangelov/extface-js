@@ -31,8 +31,8 @@ export class DeviceSimulator {
     this.deviceId = deviceId;
   }
 
-  cycle(sessionId, callback?: (err: Error, data: any)=>void) {
-    return this.handler.pull(this.deviceId, sessionId, (err, data)=>{
+  cycle(sessionId, callback?: (err: Error, data: any) => void) {
+    return this.handler.pull(this.deviceId, sessionId, (err, data) => {
       callback && callback(err, data);
     });
   }

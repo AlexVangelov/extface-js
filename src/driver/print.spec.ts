@@ -12,18 +12,22 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-import { ExtfaceDriver } from './';
-import { ExtfaceSession } from '../session';
+import { ExtfacePrintDriver } from './print';
+import { DeviceSimulator } from '../utils/deviceSimulator';
 
-export abstract class ExtfacePrintDriver extends ExtfaceDriver {
-  static NAME = 'Extface Print Driver';
-  static PRINT = true;
+class PrintDriver1 extends ExtfacePrintDriver {
 
-  constructor(deviceId: string, session: ExtfaceSession) {
-    super(deviceId, session);
-  }
-
-  print(text: string, callback?: (err: Error, bytesOut: number)=> void): void|number {
-    this.push(text, callback);
-  }
 }
+
+describe('ExtfacePrintDriver', () => {
+  let sim = new DeviceSimulator('printdevice', PrintDriver1, {});
+
+  it('session', (done) => {
+    let session = PrintDriver1.session('printdevice', 'Print Test')
+      .do((ds) => {});
+    session.once('done', done);
+    session.once('ready', () => {
+      sim.cycle(session.uuid);
+    });
+  });
+});

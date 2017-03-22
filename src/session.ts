@@ -37,17 +37,17 @@ export class ExtfaceSession extends EventEmitter {
     });
   }
 
-  do(callback: (ds: any) => void): ExtfaceSession {
+  do(fiber: (ds: any) => void, callback?: (err: Error, stats: any) => void): ExtfaceSession {
     let ds = new ExtfaceDriverContext(this.driverInstance);
     this.r.once('subscribe', (channel, subscriptions) => {
-      this.driverInstance.registerSession(()=>{
+      this.driverInstance.registerSession(() => {
         this.emit('invite');
       });
       setTimeout(() => {
         if (!this.isConnected) {
           this.r.unsubscribe();
           this.r.quit();
-          this.error(new Error(`Timeout waiting for device to connect (after ${ExtfaceDriverContext.defaultTimeoutMs/1000}s)`));
+          this.error(new Error(`Timeout waiting for device to connect (after ${ExtfaceDriverContext.defaultTimeoutMs / 1000}s)`));
         }
       }, ExtfaceDriverContext.defaultTimeoutMs);
     });
@@ -57,8 +57,10 @@ export class ExtfaceSession extends EventEmitter {
           this.isConnected = true;
           this.emit('connected');
           Sync(() => {
-            callback(ds);
+            fiber(ds);
+            this.done();
           }, (err, result) => {
+            callback && callback(err, result);
             if (err) {
               this.error(err);
               this.done();
@@ -72,7 +74,7 @@ export class ExtfaceSession extends EventEmitter {
   }
 
   notify(text: string) {
-
+    this.emit('notify', text);
   }
 
   error(err) {
