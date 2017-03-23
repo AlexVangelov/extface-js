@@ -91,4 +91,8 @@ export class ExtfaceSession extends EventEmitter {
   rpush(buffer: any, callback: (err: Error, data: any) => void) {
     this.r.rpush(this.uuid, buffer, callback);
   }
+
+  hset(key: string, value: any, callback?: (err: Error, data: any) => void) {
+    this.r.hset(`${this.uuid}:status`, key, value, callback);
+  }
 }

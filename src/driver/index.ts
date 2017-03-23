@@ -18,7 +18,7 @@ let redis = require('redis');
 
 export interface IExtfaceDriverClass<T extends ExtfaceDriver> {
   session(deviceId: string, name: string): ExtfaceSession;
-  handle(sessionId: string, buffer: any, callback: (err: Error, bytesProcessed: number) => void);
+  handle(deviceId: string, sessionId: string, buffer: any, callback?: (err: Error, bytesProcessed: number) => void);
   new (...a: any[]): T;
   NAME: string;
 }
@@ -44,15 +44,16 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
     this.r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
   }
 
-  static handle(sessionId, buffer: any, callback: (err: Error, bytesProcessed: number) => void) {
-    //console.log(`Extface:${this.deviceId} PUSH ${buffer}`);
-    callback(null, buffer.length); //return number of bytes processed
+  static handle(deviceId, sessionId, buffer: any, callback?: (err: Error, bytesProcessed: number) => void) {
+    callback && callback(null, buffer.length); //return number of bytes processed
   }
 
   push(buffer: any, callback?: (err: Error, bytesProcessed: number) => void) {
+    this.session.hset('break', 0);
+
     let tmo = setTimeout(() => {
       this.r.unsubscribe(this.session.uuid);
-      callback && callback(new Error('Timeout waiting on queue'), 0);
+      callback && callback(new Error('Device timeout'), 0);
     }, 1000);
 
     let onMessageListener = (channel, out) => {
@@ -60,6 +61,7 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
         clearTimeout(tmo);
         this.r.removeListener('message', onMessageListener);
         this.session.bytesOut += parseInt(out);
+        this.session.hset('break', 1);
         this.r.unsubscribe(this.session.uuid, (err, res) => {
           callback && callback(err, buffer.length);
         });
@@ -83,9 +85,12 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
   }
 
   pull(timeout: number, callback: (err: Error, data: any) => void) {
-    setTimeout(() => {
-      callback && callback(null, 'OK');
-    }, 0);
+    this.session.hset('break', 1);
+    this.r.blpop(this._bufferKey(), timeout, (err, listElement) => {
+      let data = ""
+      if (listElement) data = listElement[1];
+      callback && callback(err, data);
+    });
   }
 
   flush(callback?: (err: Error, data: any) => void) {
@@ -109,8 +114,8 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
     this.r.sadd(this.deviceId, this.session.uuid, callback);
   }
 
-  private get _bufferKey() {
-    return `${this.deviceId}:${this.session}`;
+  private _bufferKey() {
+    return `${this.deviceId}:${this.session.uuid}`;
   }
 
   static session<T extends ExtfaceDriver>(this: IExtfaceDriverClass<T>, deviceId: string, name: string): ExtfaceSession {

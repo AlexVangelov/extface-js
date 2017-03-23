@@ -99,7 +99,10 @@ export class ExtfaceHandler {
             r.smembers(deviceId, (err, members) => {
               if (members && members.length) {
                 if (~members.indexOf(sessionId)) {
-                  recursiveData();
+                  r.hget(`${sessionId}:status`, 'break', (err, data) => {
+                    if (data !== '1') recursiveData();
+                    else callback(err, allData);
+                  });
                 } else {
                   console.log('no')
                   callback(err, allData);

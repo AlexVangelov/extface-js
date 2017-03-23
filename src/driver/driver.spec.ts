@@ -17,7 +17,7 @@ import { expect, use, spy } from 'chai';
 let spies = require('chai-spies');
 use(spies);
 
-import * as redis from 'redis';
+let redis = require('redis');
 
 import { ExtfaceDriver } from './';
 import { ExtfaceHandler } from '../handler';
@@ -29,6 +29,12 @@ const DEVICE_ID = 'abc';
 
 class TestDriver1 extends ExtfaceDriver {
   static NAME = "TestDriver1";
+
+  static handle(deviceId, sessionId, buffer: any, callback?: (err: Error, bytesProcessed: number) => void) {
+    let r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
+    r.rpush(`${deviceId}:${sessionId}`, buffer);
+    callback && callback(null, buffer.length); //return number of bytes processed
+  }
 }
 class TestDriver2 extends ExtfaceDriver {
   static NAME = "TestDriver2";
@@ -148,7 +154,6 @@ describe('Driver', () => {
     session.do((ds: IExtfaceDriver) => {
       ds.push('567');
       ds.push('status?');
-      sim.cycle(session.uuid);
       if (ds.pull(1) === 'OK') {
         console.log('Extface Rocks!');
         ds.push('*1');
