@@ -47,9 +47,9 @@ export class ExtfaceSession extends EventEmitter {
         if (!this.isConnected) {
           this.r.unsubscribe();
           this.r.quit();
-          this.error(new Error(`Timeout waiting for device to connect (after ${ExtfaceDriverContext.defaultTimeoutMs / 1000}s)`));
+          this.error(new Error(`Timeout waiting for device to connect (after ${ExtfaceDriverContext.connectTimeoutMs / 1000}s)`));
         }
-      }, ExtfaceDriverContext.defaultTimeoutMs);
+      }, ExtfaceDriverContext.connectTimeoutMs);
     });
     this.r.once('message', (channel, out) => {
       this.r.unsubscribe((err, res) => {

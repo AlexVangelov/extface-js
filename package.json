@@ -1,6 +1,6 @@
 {
   "name": "extface",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "External Interfaces for Cloud-Based Applications",
   "repository": {
     "type": "git",
@@ -9,6 +9,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha -r ts-node/register src/**/*.spec.ts",
+    "test-drivers": "mocha -r ts-node/register src/drivers/**/*.spec.ts",
     "build": "tsc -d"
   },
   "author": "Alex Vangelov <email@data.bg>",

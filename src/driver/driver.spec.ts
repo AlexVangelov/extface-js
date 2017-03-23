@@ -46,7 +46,7 @@ describe('Driver', () => {
   let sim = new DeviceSimulator(deviceId, TestDriver1, {});
 
   beforeEach((done) => {
-    ExtfaceDriverContext.defaultTimeoutMs = 100;
+    ExtfaceDriverContext.connectTimeoutMs = 100;
     done();
   });
 

@@ -48,13 +48,15 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
     callback && callback(null, buffer.length); //return number of bytes processed
   }
 
+  static deviceTimeoutMs = 1900;
+
   push(buffer: any, callback?: (err: Error, bytesProcessed: number) => void) {
     this.session.hset('break', 0);
 
     let tmo = setTimeout(() => {
       this.r.unsubscribe(this.session.uuid);
-      callback && callback(new Error('Device timeout'), 0);
-    }, 1000);
+      callback && callback(new Error(`Device timeout (after ${ExtfaceDriver.deviceTimeoutMs}ms)`), 0);
+    }, ExtfaceDriver.deviceTimeoutMs);
 
     let onMessageListener = (channel, out) => {
       if (channel === this.session.uuid && out !== '-1') {
@@ -94,7 +96,8 @@ export abstract class ExtfaceDriver implements IExtfaceDriver {
   }
 
   flush(callback?: (err: Error, data: any) => void) {
-    //console.log('flush!');
+    this.r.del(this.session.uuid);
+    this.r.del(`${this.deviceId}:${this.session.uuid}`);
   }
 
   rpush(buffer: any, callback: (err: Error, data: any) => void) {
