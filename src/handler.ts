@@ -31,32 +31,32 @@ export class ExtfaceHandler {
     let r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
     let self = this;
 
-    function errorCallback(err: any) {
-      r.quit();
-      callback(err, totalBytesProcessed);
+    let quitAndCallback = (err: any = null)=> {
+      r.quit(()=>{
+        callback(err, totalBytesProcessed);
+      });
     }
 
     //r.once('ready', ()=> {
     r.append(this.deviceId, buffer, (err, bytesAppended) => {
-      if (err) return errorCallback(err);
+      if (err) return quitAndCallback(err);
       r.get(this.deviceId, (err, fullBuffer) => {
-        if (err) return errorCallback(err);
+        if (err) return quitAndCallback(err);
         function procBuffer(b: any) {
           if (b.length) {
             self.driverClass.handle(this.sessionId, buffer, (err, bytesProcessed) => {
-              if (err) return errorCallback(err);
+              if (err) return quitAndCallback(err);
               if (bytesProcessed) {
                 totalBytesProcessed += bytesProcessed;
                 let rest = buffer.substr(bytesProcessed);
                 r.set(self.deviceId, rest, (err, value) => {
-                  if (err) return errorCallback(err);
+                  if (err) return quitAndCallback(err);
                   procBuffer(rest);
                 })
               }
             });
           } else {
-            r.quit();
-            callback(null, totalBytesProcessed);
+            quitAndCallback(null);
           }
         }
         procBuffer(buffer);
@@ -68,6 +68,13 @@ export class ExtfaceHandler {
   pull(deviceId, wishSessionId: string, callback: (err, data?) => void): string {
     let sessionId = '';
     let r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
+    
+    let quitAndCallback = (err, data)=>{
+      r.quit(()=>{
+        callback(err, data);
+      });
+    };
+    
     r.smembers(deviceId, (err, members) => {
       if (members && members.length) {
         if (~members.indexOf(wishSessionId)) {
@@ -77,7 +84,7 @@ export class ExtfaceHandler {
         }
         cycleData();
       } else {
-        callback(err, '');
+        quitAndCallback(err, '');
       }
     });
 
@@ -92,8 +99,7 @@ export class ExtfaceHandler {
             r.publish(sessionId, data.length);
           }
           if (err || !data) {
-            r.quit();
-            callback(err, allData);
+            quitAndCallback(err, allData);
           } else {
             allData += data;
             r.smembers(deviceId, (err, members) => {
@@ -101,14 +107,14 @@ export class ExtfaceHandler {
                 if (~members.indexOf(sessionId)) {
                   r.hget(`${sessionId}:status`, 'break', (err, data) => {
                     if (data !== '1') recursiveData();
-                    else callback(err, allData);
+                    else quitAndCallback(err, allData);
                   });
                 } else {
                   console.log('no')
-                  callback(err, allData);
+                  quitAndCallback(err, allData);
                 }
               } else {
-                callback(err, allData);
+                quitAndCallback(err, allData);
               }
             });
           }
