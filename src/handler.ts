@@ -31,8 +31,8 @@ export class ExtfaceHandler {
     let r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
     let self = this;
 
-    let quitAndCallback = (err: any = null)=> {
-      r.quit(()=>{
+    let quitAndCallback = (err: any = null) => {
+      r.quit(() => {
         callback(err, totalBytesProcessed);
       });
     }
@@ -65,16 +65,20 @@ export class ExtfaceHandler {
     //}); //once ready
   }
 
-  pull(deviceId, wishSessionId: string, callback: (err, data?) => void): string {
-    let sessionId = '';
+  static pull(deviceId, wishSessionId: string, callback: (err: Error, data: any) => void) {
+    var sessionId = '';
     let r = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
-    
-    let quitAndCallback = (err, data)=>{
-      r.quit(()=>{
-        callback(err, data);
+    let allData = '';
+
+    let quitAndCallback = (err, data) => {
+      r.quit(() => {
+        callback(err, {
+          sessionId: sessionId,
+          data: data
+        });
       });
     };
-    
+
     r.smembers(deviceId, (err, members) => {
       if (members && members.length) {
         if (~members.indexOf(wishSessionId)) {
@@ -90,7 +94,6 @@ export class ExtfaceHandler {
 
     let cycleData = () => {
       r.publish(sessionId, -1); //~ connected
-      let allData = '';
       let recursiveData = () => {
         r.blpop(sessionId, 1, (err, value) => {
           let data = '';
@@ -122,7 +125,6 @@ export class ExtfaceHandler {
       }
       recursiveData();
     }
-    return sessionId;
   }
 
 }

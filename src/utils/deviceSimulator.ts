@@ -39,7 +39,7 @@ export class DeviceSimulator {
       if (data) execHandler();
     }
     let execHandler = () => {
-      this.handler.pull(this.deviceId, sessionId, (err, data) => {
+      ExtfaceHandler.pull(this.deviceId, sessionId, (err, data) => {
         if (data !== null && /status\?/.test(data)) {
           this.driverClass.handle(this.deviceId, sessionId, 'OK', (err) => {
             calbackOrContinue(err, data);
