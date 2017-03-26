@@ -62,13 +62,13 @@ describe('Driver', () => {
     expect(TestDriver2.PRINT).to.be.true;
   });
 
-  // it('handle', (done) => {
-  //   driver.handle('123', (err, bytesProcessed) => {
-  //     expect(err).to.be.null;
-  //     expect(bytesProcessed).to.equal(3);
-  //     done();
-  //   })
-  // });
+  it('handle', (done) => {
+    TestDriver1.handle('abcdef','123', "...", (err, bytesProcessed) => {
+      expect(err).to.be.null;
+      expect(bytesProcessed).to.equal(3);
+      done();
+    })
+  });
 
   // it('push', (done) => {
   //   driver.push('234', (err, bytesProcessed) => {

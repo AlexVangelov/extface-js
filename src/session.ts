@@ -39,21 +39,24 @@ export class ExtfaceSession extends EventEmitter {
 
   do(fiber: (ds: any) => void, callback?: (err: Error, stats: any) => void): ExtfaceSession {
     let ds = new ExtfaceDriverContext(this.driverInstance);
+    let tmo = setTimeout(() => {
+      if (!this.isConnected) {
+        this.r.unsubscribe();
+        this.r.quit();
+        this.error(new Error(`Timeout waiting for device to connect (after ${ExtfaceDriverContext.connectTimeoutMs / 1000}s)`));
+      } else {
+        console.warn('do timeout');
+      }
+    }, ExtfaceDriverContext.connectTimeoutMs);
     this.r.once('subscribe', (channel, subscriptions) => {
       this.driverInstance.registerSession(() => {
         this.emit('invite');
       });
-      setTimeout(() => {
-        if (!this.isConnected) {
-          this.r.unsubscribe();
-          this.r.quit();
-          this.error(new Error(`Timeout waiting for device to connect (after ${ExtfaceDriverContext.connectTimeoutMs / 1000}s)`));
-        }
-      }, ExtfaceDriverContext.connectTimeoutMs);
     });
     this.r.once('message', (channel, out) => {
       this.r.unsubscribe((err, res) => {
         if (!this.isConnected) {
+          clearTimeout(tmo); 
           this.isConnected = true;
           this.emit('connected');
           Sync(() => {
@@ -79,12 +82,13 @@ export class ExtfaceSession extends EventEmitter {
 
   error(err) {
     this.driverInstance.quit();
+    if (this.r) this.r.quit();
     this.emit('error', err);
   }
 
   done() {
-    if (this.r) this.r.quit();
     this.driverInstance.quit();
+    if (this.r) this.r.quit();
     this.emit('done');
   }
 

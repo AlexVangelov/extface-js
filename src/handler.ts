@@ -105,21 +105,23 @@ export class ExtfaceHandler {
             quitAndCallback(err, allData);
           } else {
             allData += data;
-            r.smembers(deviceId, (err, members) => {
-              if (members && members.length) {
-                if (~members.indexOf(sessionId)) {
-                  r.hget(`${sessionId}:status`, 'break', (err, data) => {
-                    if (data !== '1') recursiveData();
-                    else quitAndCallback(err, allData);
-                  });
+            setTimeout(() => { //slow down to be faster
+              r.smembers(deviceId, (err, members) => {
+                if (members && members.length) {
+                  if (~members.indexOf(sessionId)) {
+                    r.hget(`${sessionId}:status`, 'break', (err, data) => {
+                      if (data !== '1') recursiveData();
+                      else quitAndCallback(err, allData);
+                    });
+                  } else {
+                    console.log('no')
+                    quitAndCallback(err, allData);
+                  }
                 } else {
-                  console.log('no')
                   quitAndCallback(err, allData);
                 }
-              } else {
-                quitAndCallback(err, allData);
-              }
-            });
+              });
+            }, 0);
           }
         });
       }

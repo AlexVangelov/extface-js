@@ -39,12 +39,13 @@ export class DeviceSimulator {
       if (data) execHandler();
     }
     let execHandler = () => {
-      ExtfaceHandler.pull(this.deviceId, sessionId, (err, data) => {
-        if (data !== null && /status\?/.test(data)) {
+      ExtfaceHandler.pull(this.deviceId, sessionId, (err, res) => {
+        sessionId = res.sessionId;
+        if (res.data !== null && /status\?/.test(res.data)) {
           this.driverClass.handle(this.deviceId, sessionId, 'OK', (err) => {
-            calbackOrContinue(err, data);
+            calbackOrContinue(err, res.data);
           });
-        } else calbackOrContinue(err, data);
+        } else calbackOrContinue(err, res.data);
       });
     }
     execHandler();
