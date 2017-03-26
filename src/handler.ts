@@ -42,7 +42,7 @@ export class ExtfaceHandler {
       if (err) return quitAndCallback(err);
       r.get(this.deviceId, (err, fullBuffer) => {
         if (err) return quitAndCallback(err);
-        function procBuffer(b: any) {
+        let procBuffer = (b: any) => {
           if (b.length) {
             self.driverClass.handle(this.sessionId, buffer, (err, bytesProcessed) => {
               if (err) return quitAndCallback(err);
