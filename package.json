@@ -9,7 +9,9 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha -r ts-node/register src/**/*.spec.ts",
+    "watch": "mocha --watch -r ts-node/register \"src/**/*.spec.ts\"",
     "test-drivers": "mocha -r ts-node/register src/drivers/**/*.spec.ts",
+    "test-coverage": "nyc -e '.ts' -x '**/*.spec.ts' --r html -r lcov -r text npm run test",
     "build": "tsc -d"
   },
   "author": "Alex Vangelov <email@data.bg>",
@@ -22,6 +24,7 @@
     "chai": "^3.5.0",
     "chai-spies": "^0.7.1",
     "mocha": "^3.2.0",
+    "nyc": "^10.2.0",
     "ts-node": "^2.1.0",
     "typescript": "^2.2.1"
   },
